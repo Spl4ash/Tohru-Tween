@@ -75,7 +75,7 @@ TERMS OF USE - EASING EQUATIONS
 
 Open source under the BSD License.
 
-Copyright © 2001 Robert Penner
+Copyright Â© 2001 Robert Penner
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
@@ -499,7 +499,7 @@ function module:Start()
 			self.onUpdate(elapsed)
 		end
 		
-		if (tick() > self.finalTime or strength>=self.value) and activeTweens[self.name] then
+		if tick() > self.finalTime and activeTweens[self.name] then
 			self.object[self.property]=self.value
 			self.startTime=nil self.finalTime=nil self.startValue=nil
 			if self.onCompleted then
