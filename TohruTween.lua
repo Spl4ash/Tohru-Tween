@@ -48,7 +48,6 @@ local RS=game:GetService('RunService')
 local module={}
 module.__index=module
 
-local storedTweens={};
 local activeTweens={};
 export type tweenData={
 	name:              string;
@@ -472,7 +471,6 @@ end
 
 function module.Create(params:tweenData)
 	local this=setmetatable(params::tweenData,module)
-	storedTweens[params.name]=true
 	return this
 end
 
@@ -516,10 +514,6 @@ function module:Stop()
 		activeTween:Disconnect()
 		activeTween=nil;
 	end
-end
-
-function module:Destroy()
-	storedTweens[self.name]=nil
 end
 
 return module
