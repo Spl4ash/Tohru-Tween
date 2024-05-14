@@ -520,19 +520,28 @@ end
 --------------------------------FAST TWEEENS-----------------------------------------
 ---------------------------------------------------------------------------------------
 
+local portTypes={
+	Alpha={'Transparency';'ImageTransparency';'Alpha';'transparency';'alpha'};
+	Angle={'Rotation';'Angle';'rotation';'angle'};
+	X={'X','x'};
+	Y={'Y','y'};
+	Z={'Z','z'};
+};
+
 function module:PortVar(type:string)
-	local types={
-		Alpha={'Transparency';'ImageTransparency';'Alpha';'transparency';'alpha'};
-		Angle={'Rotation';'Angle';'rotation';'angle'};
-		X={'X','x';};
-		Y={'Y','y';};
-		Z={'Z','z';};
-	};
-	if not types[type] then return end
-	for i=1,#types[type] do
-		local portProperty=types[type][i]
+	if not portTypes[type] then return end
+	for i=1,#portTypes[type] do
+		local portProperty=portTypes[type][i]
 		if self.object[portProperty] then return portProperty end
 	end
+end
+
+function module.setPortableType(type:string, properties:{})
+	portTypes[type]=properties;
+end
+
+function module.addPortableType(type:string, property:string)
+	table.insert(portTypes[type],property)
 end
 
 function module.doTweenVar(property,onUpdate,onCompleted,...)
