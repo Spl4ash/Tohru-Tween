@@ -476,12 +476,12 @@ end
 
 function module:Start()
 	local isServer=RS:IsServer()
-	self.startTime=tick()
-	self.finalTime=tick()+self.duration
+	self.startTime=self.startTime or tick()
+	self.finalTime=self.startTime+self.duration
 	self.startValue=self.object[self.property]
-	
+
 	self:Stop()
-	
+
 	activeTweens[self.name]=RS[isServer and 'Stepped' or 'RenderStepped']:Connect(function(cDelta,sDelta)
 		local elapsed=isServer and sDelta or cDelta
 		local curtime=tick()-self.startTime
@@ -490,13 +490,9 @@ function module:Start()
 		local diff=self.value - startstrength
 		local curve=curveList[self.ease]
 		local strength=curve(curtime, startstrength, diff, duration, self.ex1, self.ex2)
-		
+
 		self.object[self.property]=strength
-		
-		if self.onUpdate then
-			self.onUpdate(elapsed)
-		end
-		
+
 		if tick() > self.finalTime and activeTweens[self.name] then
 			self.object[self.property]=self.value
 			self.startTime=nil self.finalTime=nil self.startValue=nil
@@ -505,14 +501,72 @@ function module:Start()
 			end
 			self:Stop()
 		end
+		if self.onUpdate then
+			self.onUpdate(elapsed)
+		end
 	end)
 end
 
 function module:Stop()
 	local activeTween=activeTweens[self.name]
 	if activeTween then
-		activeTween:Disconnect()
-		activeTween=nil;
+		--warn('Disconnected: '..self.name..'!')
+		activeTweens[self.name]:Disconnect()
+		activeTweens[self.name]=nil;
+	end
+end
+
+---------------------------------------------------------------------------------------
+--------------------------------FAST TWEEENS-----------------------------------------
+---------------------------------------------------------------------------------------
+
+function module:PortVar(type:string)
+	local types={
+		Alpha={'Transparency';'ImageTransparency';'Alpha';'transparency';'alpha'};
+		Angle={'Rotation';'Angle';'rotation';'angle'};
+		X={'X','x';};
+		Y={'Y','y';};
+		Z={'Z','z';};
+	};
+	if not types[type] then return end
+	for i=1,#types[type] do
+		local portProperty=types[type][i]
+		if self.object[portProperty] then return portProperty end
+	end
+end
+
+function module.doTweenVar(property,onUpdate,onCompleted,...)
+	local tween=module.Create(...)
+	tween.property=tween:PortVar(property) or property;
+	tween.onCompleted=onCompleted
+	tween.onUpdate=onUpdate
+	tween:Start()
+end
+
+function module.doFastTween(property:string, tag:String, var:String, value:Dynamic, duration:Float, ease:String, onCompleted:(...any)->(), onUpdate:(delta))
+	module.doTweenVar(property,onUpdate,onCompleted,{name=tag;object=var;value=value;duration=duration;ease=ease;})
+end
+--// properties -> X | Y | Z | Angle | Alpha
+
+function module.doTweenVector(tag:String, var:string, property:string, value:Dynamic, duration:Float, ease:String)
+	local prop=var[property]
+	local vectorType=typeof(prop)
+	local vectors=vectorType=='Vector3' and {'X';'Y';'Z'} or {'X';'Y'};
+	local startValue=prop or Vector3.zero
+	local toTween={x=startValue.X;y=startValue.Y;z=startValue.Z}
+	local curValue=startValue
+	for i=1,#vectors do
+		local vector:string=vectors[i]
+		module.doTweenVar(vector,function(elapsed)
+			if not toTween then return end
+			curValue=vectorType=='Vector3' and Vector3.new(toTween.x,toTween.y,toTween.z) or Vector2.new(toTween.x,toTween.y)
+			var[property]=curValue
+		end
+		,function()
+			toTween=nil;
+			vectors=nil;
+		end
+		,{name=tag..vector;object=toTween;value=value[string.upper(vector)];duration=duration;ease=ease;startTime=tick()})
 	end
 end
 
